@@ -1,42 +1,40 @@
 import './css/styles.css';
-import { debounce, property } from 'lodash';
+import { fetchCountries } from './fetchCountries';
+import { debounce } from 'lodash';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
+const DEBOUNCE_DELAY = 300;
 const refs = {
-  input: document.querySelector('#seach-box'),
+  input: document.querySelector('#search-box'),
   countryList: document.querySelector('.country-list'),
   countryInfo: document.querySelector('.country-info'),
 };
 
-const DEBOUNCE_DELAY = 300;
+refs.input.addEventListener('input', debounce(OnInput, DEBOUNCE_DELAY));
 
-// refs.input.addEventListener('input', OnInput);
-const nameCountry = 'ukraine';
+function OnInput(e) {
+  const country = e.target.value.trim();
+  if (!country) {
+    return;
+  }
 
-fetch(
-  `https://restcountries.com/v3.1/name/${nameCountry}?fields=name,capital,population,flags,languages`,
-)
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(response.status);
-    }
-    return response.json();
-  })
-  .then(response => {
-    console.log(response);
-    response.forEach(({ name, capital, population, flags, languages }) => {
-      const countryItemString = `
+  console.log(country);
+
+  fetchCountries(country)
+    .then(ref => console.log(ref))
+    .catch(error => console.log(error));
+}
+
+function countryInfoMarkup(country) {
+  country.forEach(({ name, capital, population, flags, languages }) => {
+    refs.countryInfo.innerHTML = `
       <div>
-          <img src='${flags.svg}' alt='flags' style='height:20px'> 
+          <img src='${flags.svg}' alt='flags' style='height:20px'>
           ${name.official}
       </div>
-      <div>Capital: ${capital}</div>
+      <div>Capital: ${capital.join(', ')}</div>
       <div>Population: ${population}</div>
-      <div>Languages: ${languages}</div>
+      <div>Languages: ${Object.values(languages).join(', ')}</div>
       `;
-      console.log(countryItemString);
-      console.log(name.official, capital, population, flags, languages);
-      refs.countryInfo.innerHTML = countryItemString;
-    });
-  })
-  .catch(error => console.log(error));
+  });
+}
